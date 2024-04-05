@@ -1,4 +1,7 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using FirebaseAdmin.Auth;
+using Microsoft.IdentityModel.Tokens;
 
 namespace online_fashion_shopping_api.Middlewares
 {
@@ -8,36 +11,53 @@ namespace online_fashion_shopping_api.Middlewares
     private readonly FirebaseAuth _firebaseAuth = firebaseAuth;
 
         public async Task InvokeAsync(HttpContext context)
-    {
-        // if path is /api/user/register, skip token validation
-        if (context.Request.Path.Value.Contains("/api/user/register") ||
-            context.Request.Path.Value.Contains("/api/user/login"))
         {
+            if (context.Request.Path.Value.Contains("/api/user/register") ||
+                context.Request.Path.Value.Contains("/api/user/login"))
+            {
+                await _next(context);
+                return;
+            }
+
+            string? authorizationHeader = context.Request.Headers["Authorization"];
+            if (authorizationHeader == null || !authorizationHeader.ToString().StartsWith("Bearer "))
+            {
+                context.Response.StatusCode = 401;
+                return;
+            }
+
+            var token = authorizationHeader.ToString().Replace("Bearer ", string.Empty);
+            if (token != null)
+            {
+                try
+                {
+                    string key = Environment.GetEnvironmentVariable("SECRET_KEY");
+                    var tokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key)),
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = true,
+                    };
+
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var securityToken = tokenHandler.ValidateToken(token, tokenValidationParameters, out var validatedSecurityToken);
+                    context.Items["UserId"] = securityToken;
+                }
+                catch (SecurityTokenValidationException e)
+                {
+                    context.Response.StatusCode = 401;
+                    var respone = new
+                    {
+                        Message = "Invalid token",
+                        Error = e.Message
+                    };
+                    await context.Response.WriteAsJsonAsync(respone);
+                    return;
+                }
+            }
             await _next(context);
-            return;
         }
-        // 1. Check for Custom Token in Authorization header
-        if (!context.Request.Headers.TryGetValue("Authorization", out var authorizationHeader))
-        {
-            context.Response.StatusCode = 401; // Unauthorized
-            return;
-        }
-
-        var token = authorizationHeader.FirstOrDefault()?.Split(' ').LastOrDefault();
-
-            // 2. Verify Custom Token Signature (replace with your secret key)
-        try
-        {
-            var verificationResult = await _firebaseAuth.VerifyIdTokenAsync(token);
-            context.Items["UserId"] = verificationResult.Uid; // Store user ID for further use
-        }
-        catch (Exception)
-        {
-            context.Response.StatusCode = 401; // Unauthorized
-            return;
-        }
-
-        await _next(context);
     }
-}
 }

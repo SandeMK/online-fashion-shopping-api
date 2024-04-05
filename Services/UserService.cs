@@ -32,20 +32,31 @@ namespace online_fashion_shopping_api.Services
                     DisplayName = user.DisplayName
                 });
 
-                // save user data to Firestore
-                CollectionReference usersCollection = _firestoreDb.Collection("users");
-                DocumentReference userRef = await usersCollection.AddAsync(new
+                await _firestoreDb.RunTransactionAsync(async transaction =>
                 {
-                    user.Email,
-                    user.DisplayName,
-                    user.PhoneNumber,
-                    Password = new PasswordManager().HashPassword(user.Password),
-                    UserType = user.UserType.ToString()
+                    DocumentReference userRef = _firestoreDb.Collection("users").Document(userRecord.Uid);
+                    DocumentSnapshot userSnapshot = await transaction.GetSnapshotAsync(userRef);
+
+                    if (userSnapshot.Exists)
+                    {
+                        throw new Exception("User already exists.");
+                    }
+
+                    transaction.Set(userRef, new
+                    {
+                        user.Email,
+                        user.DisplayName,
+                        user.PhoneNumber,
+                        Password = new PasswordManager().HashPassword(user.Password),
+                        UserType = user.UserType.ToString()
+                    });
+
+                    return transaction;
                 });
 
                 return new
                 {
-                    userRef.Id,
+                    Id=userRecord.Uid,
                     user.Email,
                     user.DisplayName,
                     user.PhoneNumber,
@@ -61,7 +72,6 @@ namespace online_fashion_shopping_api.Services
         public async Task<object> Login(UserLoginRequest user)
         {
             if (user == null) throw new Exception("Invalid user data.");
-
             try
             {
                 QuerySnapshot userSnapshot = await _firestoreDb.Collection("users")
@@ -84,7 +94,6 @@ namespace online_fashion_shopping_api.Services
                     UserType = userDict["UserType"].ToString() ?? string.Empty,
                 };
 
-                // verify user password
                 if (!new PasswordManager().VerifyPassword(user.Password, userRecord.Password))
                 {
                     throw new Exception("Invalid email or password.");
@@ -93,12 +102,9 @@ namespace online_fashion_shopping_api.Services
                 var customClaims = new Dictionary<string, object>
                 {
                     { "UserId", userRecord.Id },
-                    { "UserType", userRecord.UserType }
                 };
 
-                // create a custom token for the user
-                string customToken = await _firebaseAuth.CreateCustomTokenAsync(userRecord.Id, customClaims);
-
+                string customToken = new JwtTokenGenerator().GenerateToken(userRecord.Id);
                 return new
                 {
                     userRecord.Id,

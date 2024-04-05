@@ -32,3 +32,4 @@ msbuild.wrn
 .vs/
 
 service_account.json
+.env

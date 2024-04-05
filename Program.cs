@@ -5,8 +5,15 @@ using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 using online_fashion_shopping_api.Middlewares;
 using online_fashion_shopping_api.Services;
+using online_fashion_shopping_api.DotEnv;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var root = Directory.GetCurrentDirectory();
+var envFile = Path.Combine(root, ".env");
+DotEnv.Load(envFile);
+
+var config = new ConfigurationBuilder().AddEnvironmentVariables().Build();
 
 Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", "service_account.json");
 
@@ -18,7 +25,9 @@ builder.Services.AddSingleton(FirebaseApp.Create(new AppOptions()
 
 builder.Services.AddSingleton(FirebaseAuth.DefaultInstance);
 builder.Services.AddSingleton(FirestoreDb.Create("online-fashion-shopping-675ab"));
+
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<StyleService>();
 
 
 builder.Services.AddFirebaseAuthentication();
