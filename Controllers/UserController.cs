@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using online_fashion_shopping_api.Requests;
+using online_fashion_shopping_api.Responses;
 using online_fashion_shopping_api.Services;
 
 namespace online_fashion_shopping_api.Controllers
@@ -33,6 +34,21 @@ namespace online_fashion_shopping_api.Controllers
             {
                 object loggedInUser = await _userService.Login(user);
                 return Ok(loggedInUser);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new Response { Message = e.Message });
+            }
+        }
+
+        [HttpPost]
+        [Route("{id}/update")]
+        public async Task<IActionResult> Update(string id, [FromBody] UserUpdateRequest user)
+        {
+            try
+            {
+                object updatedUser = await _userService.UpdateProfile(id, user);
+                return Ok(updatedUser);
             }
             catch (Exception e)
             {

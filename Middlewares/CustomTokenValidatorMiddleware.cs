@@ -1,14 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using FirebaseAdmin.Auth;
 using Microsoft.IdentityModel.Tokens;
 
 namespace online_fashion_shopping_api.Middlewares
 {
-    public class CustomTokenValidatorMiddleware(RequestDelegate next, FirebaseAuth firebaseAuth)
+    public class CustomTokenValidatorMiddleware(RequestDelegate next)
     {
     private readonly RequestDelegate _next = next;
-    private readonly FirebaseAuth _firebaseAuth = firebaseAuth;
 
         public async Task InvokeAsync(HttpContext context)
         {
@@ -31,7 +29,19 @@ namespace online_fashion_shopping_api.Middlewares
             {
                 try
                 {
-                    string key = Environment.GetEnvironmentVariable("SECRET_KEY");
+                    string? key = Environment.GetEnvironmentVariable("SECRET_KEY");
+                    if(key == null)
+                    {
+                        context.Response.StatusCode = 500;
+                        var respone = new
+                        {
+                            Message = "Internal server error",
+                            Error = "Secret key not found"
+                        };
+                        await context.Response.WriteAsJsonAsync(respone);
+                        return;
+                    }
+
                     var tokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,

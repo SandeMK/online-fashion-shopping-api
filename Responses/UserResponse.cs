@@ -1,4 +1,6 @@
-public class Response
+using online_fashion_shopping_api.Models;
+
+namespace online_fashion_shopping_api.Responses
 {
-    public string Message { get; set; }
+    public class UserResponse: User {}
 }
