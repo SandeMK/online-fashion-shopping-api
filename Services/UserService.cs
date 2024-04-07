@@ -97,7 +97,7 @@ namespace online_fashion_shopping_api.Services
                     PhoneNumber = snapshot.GetValue<string>("PhoneNumber") ?? string.Empty,
                     UserType = snapshot.GetValue<string>("UserType") ?? string.Empty,
                     Bio = snapshot.GetValue<string>("Bio") ?? string.Empty,
-                    Styles = snapshot.GetValue<List<string>>("Styles") ?? [],
+                    Styles = snapshot.GetValue<string[]>("Styles") ?? [],
                     CustomToken = string.Empty
                 };
 
@@ -174,7 +174,7 @@ namespace online_fashion_shopping_api.Services
                     PhoneNumber = userSnapshot.GetValue<string>("PhoneNumber") ?? string.Empty,
                     UserType = userSnapshot.GetValue<string>("UserType") ?? string.Empty,
                     Bio = userSnapshot.GetValue<string>("Bio") ?? string.Empty,
-                    Styles = userSnapshot.GetValue<List<string>>("Styles") ?? [],
+                    Styles = userSnapshot.GetValue<string[]>("Styles") ?? [],
                 };
             }
             catch (Exception e)
