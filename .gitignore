@@ -33,3 +33,5 @@ msbuild.wrn
 
 service_account.json
 .env
+.fake
+.config

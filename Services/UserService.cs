@@ -14,8 +14,9 @@ namespace online_fashion_shopping_api.Services
 
         public async Task<UserResponse> Register(UserRegistrationRequest user)
         {
-            if (user == null)
+            if (user == null) {
                 throw  new Exception("Invalid user data.");
+            }
             
             string? userType = user.UserType;
             if (!userType.Equals(UserType.Client, StringComparison.CurrentCultureIgnoreCase) &&
@@ -26,10 +27,11 @@ namespace online_fashion_shopping_api.Services
 
             try
             {
+                string hashedPassword = new PasswordManager().HashPassword(user.Password);
                 UserRecord userRecord = await _firebaseAuth.CreateUserAsync(new UserRecordArgs
                 {
                     Email = user.Email,
-                    Password = user.Password,
+                    Password = hashedPassword,
                     DisplayName = user.DisplayName
                 });
 
@@ -43,16 +45,16 @@ namespace online_fashion_shopping_api.Services
                         throw new Exception("User already exists.");
                     }
 
-                    transaction.Set(userRef, new
+                    CreateUser _user = new()
                     {
-                        user.Email,
-                        user.DisplayName,
-                        user.PhoneNumber,
-                        Password = new PasswordManager().HashPassword(user.Password),
-                        UserType = user.UserType.ToString(),
-                        Bio = string.Empty,
-                        Styles = Array.Empty<string>()
-                    });
+                        Email = user.Email,
+                        DisplayName = user.DisplayName,
+                        PhoneNumber = user.PhoneNumber,
+                        UserType = user.UserType,
+                        Password = hashedPassword
+                    };
+
+                    transaction.Set(userRef, _user.ToDictionary());
 
                     return transaction;
                 });
@@ -80,7 +82,7 @@ namespace online_fashion_shopping_api.Services
             try
             {
                 QuerySnapshot userSnapshot = await _firestoreDb.Collection("users")
-                    .WhereEqualTo("Email", user.Email)
+                    .WhereEqualTo("email", user.Email)
                     .GetSnapshotAsync();
 
                 if (userSnapshot.Count == 0)
@@ -88,32 +90,18 @@ namespace online_fashion_shopping_api.Services
                     throw new Exception("Invalid email or password.");
                 }
 
-                var snapshot = userSnapshot.Documents[0]; 
-                UserLoginResponse userRecord = new()
-                {
-                    Id = snapshot.Id,
-                    Email = snapshot.GetValue<string>("Email") ?? string.Empty,
-                    DisplayName = snapshot.GetValue<string>("DisplayName") ?? string.Empty,
-                    PhoneNumber = snapshot.GetValue<string>("PhoneNumber") ?? string.Empty,
-                    UserType = snapshot.GetValue<string>("UserType") ?? string.Empty,
-                    Bio = snapshot.GetValue<string>("Bio") ?? string.Empty,
-                    Styles = snapshot.GetValue<string[]>("Styles") ?? [],
-                    CustomToken = string.Empty
-                };
-
-                string password = snapshot.GetValue<string>("Password") ?? string.Empty;
-                if (!new PasswordManager().VerifyPassword(user.Password, password))
+                DocumentSnapshot snapshot = userSnapshot.Documents[0]; 
+                if (!new PasswordManager().VerifyPassword(user.Password, snapshot.GetValue<string>("password")))
                 {
                     throw new Exception("Invalid email or password.");
                 }
 
                 var customClaims = new Dictionary<string, object>
                 {
-                    { "UserId", userRecord.Id },
+                    { "user_id", snapshot.Id },
                 };
-
-                userRecord.CustomToken = new JwtTokenGenerator().GenerateToken(userRecord.Id);;
-                return userRecord;
+                string token = new JwtTokenGenerator().GenerateToken(snapshot.Id);
+                return UserLoginResponse.FromFirestore(snapshot, token);
             }
             catch (Exception e)
             {
@@ -136,10 +124,10 @@ namespace online_fashion_shopping_api.Services
                 }
               
                 Dictionary<string, object> userDict = [];
-                if (user.DisplayName != null) userDict.Add("DisplayName", user.DisplayName);
-                if (user.PhoneNumber != null) userDict.Add("PhoneNumber", user.PhoneNumber);
-                if (user.Bio != null) userDict.Add("Bio", user.Bio);
-                if (user.Styles != null) userDict.Add("Styles", user.Styles);
+                if (user.DisplayName != null) userDict.Add("display_name", user.DisplayName);
+                if (user.PhoneNumber != null) userDict.Add("phone_number", user.PhoneNumber);
+                if (user.Bio != null) userDict.Add("bio", user.Bio);
+                if (user.Styles != null) userDict.Add("styles", user.Styles);
 
                 if(userDict.Count == 0) {
                     throw new Exception("No data to update.");
@@ -166,16 +154,7 @@ namespace online_fashion_shopping_api.Services
                     throw new Exception("User not found.");
                 }
                
-                return new UserResponse
-                {
-                    Id = userSnapshot.Id,
-                    Email = userSnapshot.GetValue<string>("Email") ?? string.Empty,
-                    DisplayName = userSnapshot.GetValue<string>("DisplayName") ?? string.Empty,
-                    PhoneNumber = userSnapshot.GetValue<string>("PhoneNumber") ?? string.Empty,
-                    UserType = userSnapshot.GetValue<string>("UserType") ?? string.Empty,
-                    Bio = userSnapshot.GetValue<string>("Bio") ?? string.Empty,
-                    Styles = userSnapshot.GetValue<string[]>("Styles") ?? [],
-                };
+                return UserResponse.FromFirestore(userSnapshot);
             }
             catch (Exception e)
             {

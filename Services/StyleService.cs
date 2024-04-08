@@ -9,36 +9,20 @@ namespace online_fashion_shopping_api.Services
 
         public async Task<List<Style>> GetStyles()
          {
-             CollectionReference colelctionRef = _firestoreDb.Collection("styles");
-             QuerySnapshot styles = await colelctionRef.GetSnapshotAsync();
-
-             List<Style> stylesList = styles.Documents.Select((styleDoc) => {
-                return new Style()
-                {
-                    Id = styleDoc.Id,
-                    Name = styleDoc.GetValue<string>("name"),
-                    Description = styleDoc.GetValue<string>("description"),
-                    ImageUrl = styleDoc.GetValue<string>("image_url")
-                };
-             }).ToList();
-
-             return stylesList;
+             CollectionReference _ref = _firestoreDb.Collection("styles");
+             QuerySnapshot styles = await _ref.GetSnapshotAsync();
+             
+             return styles.Documents.Select(Style.FromFirestore).ToList();
          }
 
             public async Task<Style?> GetStyleById(string id)
             {
-                DocumentReference styleRef = _firestoreDb.Collection("styles").Document(id);
-                DocumentSnapshot styleDoc = await styleRef.GetSnapshotAsync();
+                DocumentReference _ref = _firestoreDb.Collection("styles").Document(id);
+                DocumentSnapshot _doc = await _ref.GetSnapshotAsync();
     
-                if (styleDoc.Exists)
+                if (_doc.Exists)
                 {
-                    return new Style()
-                    {
-                        Id = styleDoc.Id,
-                        Name = styleDoc.GetValue<string>("name"),
-                        Description = styleDoc.GetValue<string>("description"),
-                        ImageUrl = styleDoc.GetValue<string>("image_url")
-                    };
+                    return Style.FromFirestore(_doc);
                 }
                 return null;
             }

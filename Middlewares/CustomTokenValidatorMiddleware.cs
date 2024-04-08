@@ -10,8 +10,8 @@ namespace online_fashion_shopping_api.Middlewares
 
         public async Task InvokeAsync(HttpContext context)
         {
-            if (context.Request.Path.Value.Contains("/api/user/register") ||
-                context.Request.Path.Value.Contains("/api/user/login"))
+            string? path = context.Request.Path.Value!;
+            if (path.Contains("/api/user/register") || path.Contains("/api/user/login"))
             {
                 await _next(context);
                 return;
@@ -53,7 +53,7 @@ namespace online_fashion_shopping_api.Middlewares
 
                     var tokenHandler = new JwtSecurityTokenHandler();
                     var securityToken = tokenHandler.ValidateToken(token, tokenValidationParameters, out var validatedSecurityToken);
-                    context.Items["UserId"] = securityToken;
+                    context.Items["user_id"] = securityToken;
                 }
                 catch (SecurityTokenValidationException e)
                 {

@@ -17,8 +17,8 @@ namespace online_fashion_shopping_api.Controllers
         {
            try
             {
-                object newUser = await _userService.Register(user);
-                return Ok(newUser);
+                var newUser = await _userService.Register(user);
+                return Ok(newUser.ToDictionary());
             }
             catch (Exception e)
             {
@@ -32,8 +32,8 @@ namespace online_fashion_shopping_api.Controllers
         {
             try
             {
-                object loggedInUser = await _userService.Login(user);
-                return Ok(loggedInUser);
+                var loggedInUser = await _userService.Login(user);
+                return Ok(loggedInUser.ToDictionary());
             }
             catch (Exception e)
             {
@@ -47,8 +47,8 @@ namespace online_fashion_shopping_api.Controllers
         {
             try
             {
-                object updatedUser = await _userService.UpdateProfile(id, user);
-                return Ok(updatedUser);
+                var updatedUser = await _userService.UpdateProfile(id, user);
+                return Ok(updatedUser.ToDictionary());
             }
             catch (Exception e)
             {
