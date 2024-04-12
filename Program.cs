@@ -36,8 +36,23 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "MyPolicy",
+        policy  =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+                
+        });
+});
+
 
 var app = builder.Build();
+
+app.UseCors("MyPolicy");
 
 if (app.Environment.IsDevelopment())
 {

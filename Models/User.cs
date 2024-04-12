@@ -2,8 +2,8 @@ namespace online_fashion_shopping_api.Models
 {
     public class UserType
     {
-        public const string Client = "Client";
-        public const string Stylist = "Sylist";
+        public const string Client = "client";
+        public const string Stylist = "stylist";
     }
     public class User
     {
@@ -26,7 +26,8 @@ namespace online_fashion_shopping_api.Models
                 { "phone_number", PhoneNumber },
                 { "user_type", UserType },
                 { "bio", Bio  },
-                { "styles", Styles  }
+                { "styles", Styles  },
+                { "password", Password }
             };
         }           
     }
