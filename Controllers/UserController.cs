@@ -56,5 +56,20 @@ namespace online_fashion_shopping_api.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("{id}/chats")]
+        public async Task<IActionResult> GetUserChats(string id)
+        {
+            try
+            {
+                var chats = await _userService.GetUserChats(id);
+                return Ok(chats);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new Response { Message = e.Message });
+            }
+        }
+
     }
 }

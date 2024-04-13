@@ -28,6 +28,7 @@ builder.Services.AddSingleton(FirestoreDb.Create("online-fashion-shopping-675ab"
 
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<StyleService>();
+builder.Services.AddScoped<ChatService>();
 
 
 builder.Services.AddFirebaseAuthentication();

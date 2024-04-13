@@ -161,5 +161,41 @@ namespace online_fashion_shopping_api.Services
                 throw new Exception(e.Message);
             }
         }
+
+        //get all chats where the user is a sender|reveiver, and get the other user's profile
+        public async Task<GetChatsResponse> GetUserChats(string userId)
+        {
+            try
+            {
+                QuerySnapshot chats = await _firestoreDb.Collection("chats")
+                    .WhereArrayContains("members", userId)
+                    .GetSnapshotAsync();
+
+                if(chats.Count == 0) return new GetChatsResponse { Chats = [] };
+
+                List<ChatData> _chats = [];
+                foreach (DocumentSnapshot chat in chats.Documents)
+                {
+                    string? otherUserId = chat.GetValue<string[]>("members").First(id => !id.Equals(userId));
+                    UserResponse otherUser = await GetProfile(otherUserId);
+                    _chats.Add(new ChatData
+                    {
+                        ConversationId = chat.Id,
+                        ReceiverId = otherUserId,
+                        ReceiverName = otherUser.DisplayName
+                    });
+                }
+
+                return new GetChatsResponse
+                {
+                    Chats = _chats
+                };
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+    
     }  
 }

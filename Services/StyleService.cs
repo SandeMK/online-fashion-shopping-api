@@ -1,5 +1,6 @@
 using Google.Cloud.Firestore;
 using online_fashion_shopping_api.Models;
+using online_fashion_shopping_api.Responses;
 
 namespace online_fashion_shopping_api.Services
 {
@@ -15,16 +16,23 @@ namespace online_fashion_shopping_api.Services
              return styles.Documents.Select(Style.FromFirestore).ToList();
          }
 
-            public async Task<Style?> GetStyleById(string id)
+            public async Task<GetStyleResponse?> GetStyleById(string id)
             {
                 DocumentReference _ref = _firestoreDb.Collection("styles").Document(id);
                 DocumentSnapshot _doc = await _ref.GetSnapshotAsync();
     
-                if (_doc.Exists)
+                // get all stylists associated with the style
+                QuerySnapshot stylists = await _firestoreDb.Collection("users")
+                    .WhereArrayContains("styles", id)
+                    .GetSnapshotAsync();
+
+                UserResponse[] _stylists = stylists.Documents.Select(UserResponse.FromFirestore).ToArray();
+
+                return _doc.Exists ? new GetStyleResponse
                 {
-                    return Style.FromFirestore(_doc);
-                }
-                return null;
+                    Style = Style.FromFirestore(_doc),
+                    Stylists = _stylists
+                } : null;
             }
     }
 }

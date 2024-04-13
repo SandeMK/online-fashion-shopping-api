@@ -24,6 +24,17 @@ namespace online_fashion_shopping_api.Models
                 ImageUrl = doc.GetValue<string>("image_url")
             };
         }
+
+         public virtual Dictionary<string, object> ToDictionary()
+         {
+             return new Dictionary<string, object>
+             {
+                 { "id", Id },
+                 { "name", Name },
+                 { "description", Description },
+                 { "image_url", ImageUrl }
+             };
+         }
         
     }
 }

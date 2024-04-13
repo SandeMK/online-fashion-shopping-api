@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using online_fashion_shopping_api.Models;
 using online_fashion_shopping_api.Responses;
 using online_fashion_shopping_api.Services;
 
@@ -32,11 +31,11 @@ namespace online_fashion_shopping_api.Controllers
         {
             try
             {
-                Style? style = await _styleService.GetStyleById(id);
+                GetStyleResponse? style = await _styleService.GetStyleById(id);
                 if (style == null)
                     return NotFound(new Response { Message = "Style not found" });
                 
-                return Ok(style);
+                return Ok(style.ToDictionary());
             }
             catch (Exception e)
             {
